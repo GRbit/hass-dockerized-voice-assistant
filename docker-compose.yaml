@@ -1,0 +1,181 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "lscr.io/linuxserver/homeassistant:latest"
+    user: 1000:1000
+    ports:
+      - 8123:8123
+    entrypoint:
+      - "/init"
+    volumes:
+      - ${CONTAINERS_CONFIGS}/homeassistant/backup:/backup
+      - ${CONTAINERS_CONFIGS}/homeassistant/config:/config
+      - /run/dbus:/run/dbus:ro
+    environment:
+      - TZ=Europe/Amsterdam
+      - PGID=1000
+      - PUID=1000
+      - PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      - PS1=$(whoami)@$(hostname):$(pwd)\\$
+      - HOME=/config
+      - TERM=xterm
+      - S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+      - S6_VERBOSITY=1
+      - S6_STAGE2_HOOK=/docker-mods
+      - VIRTUAL_ENV=/lsiopy
+      - LSIO_FIRST_PARTY=true
+      - S6_SERVICES_GRACETIME=240000
+    working_dir: "/"
+    restart: unless-stopped
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    user: 1000:1000
+    volumes:
+      - ${CONTAINERS_CONFIGS}/mosquitto:/mosquitto
+    environment:
+      - TZ=Europe/Amsterdam
+      - PGID=1000
+      - PUID=1000
+    ports:
+      - 1883:1883
+      - 9001:9001
+    stdin_open: true 
+    tty: true
+    restart: unless-stopped
+
+  openwakeword:
+    container_name: openwakeword
+    image: rhasspy/wyoming-openwakeword
+    user: 1000:1000
+    ports:
+      - 10400:10400
+    volumes:
+      - ${CONTAINERS_CONFIGS}/openwakeword:/data
+      - ${CONTAINERS_CONFIGS}/openwakeword:/custom
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Europe/Amsterdam
+      - PGID=1000
+      - PUID=1000
+    command: --preload-model 'ok_nabu' --custom-model-dir /custom
+    restart: unless-stopped
+
+  faster-whisper:
+    image: lscr.io/linuxserver/faster-whisper:latest
+    container_name: faster-whisper
+    user: 1000:1000
+    ports:
+      - 10300:10300
+    volumes:
+      - ${CONTAINERS_CONFIGS}/faster-whisper/config:/config
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+      - WHISPER_MODEL=distil-small.en
+      - WHISPER_BEAM=1 #optional
+      - WHISPER_LANG=en #optional
+    group_add:
+      - video # for gpu decoding support if your server has one
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+    restart: unless-stopped
+
+  piper:
+    image: lscr.io/linuxserver/piper:latest
+    container_name: piper
+    user: 1000:1000
+    ports:
+      - 10200:10200
+    volumes:
+      - ${CONTAINERS_CONFIGS}/piper/config:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - PIPER_VOICE=en_US-lessac-medium
+      - PIPER_LENGTH=1.0 #optional
+      - PIPER_NOISE=0.667 #optional
+      - PIPER_NOISEW=0.333 #optional
+      - PIPER_SPEAKER=0 #optional
+      - PIPER_PROCS=1 #optional
+    restart: unless-stopped
+
+  playback:
+    container_name: wyoming-snd-external
+    build: https://github.com/rhasspy/wyoming-snd-external.git
+    image: wyoming-snd-external
+    user: 1000:1000
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    devices:
+      - /dev/snd:/dev/snd
+    group_add:
+      - audio
+    command:
+      - "--device"
+      - "default:CARD=USB"
+      - "--debug"
+    restart: unless-stopped
+
+  microphone:
+    container_name: wyoming-mic-external
+    build: https://github.com/rhasspy/wyoming-mic-external.git
+    image: wyoming-mic-external
+    user: 1000:1000
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    devices:
+      - /dev/snd:/dev/snd
+    group_add:
+      - audio
+    command:
+      - "--device"
+      - "default:CARD=USB"
+      - "--debug"
+    restart: unless-stopped
+      
+  satellite:
+    container_name: wyoming-satellite
+    build: https://github.com/graimalkin/wyoming-satellite.git
+    image: wyoming-satellite
+    user: 1000:1000
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    ports:
+      - 10700:10700
+    command:
+      - "--name"
+      - "satellite"
+      - "--uri"
+      - "tcp://0.0.0.0:10700"
+      - "--mic-uri"
+      - "tcp://microphone:10600"
+      - "--snd-uri"
+      - "tcp://playback:10601"
+      - "--debug"
+      - "--awake-wav"
+      - "sounds/awake.wav"
+      - "--done-wav"
+      - "sounds/done.wav"
+      - "--wake-uri"
+      - "tcp://openwakeword:10400"
+      - "--wake-word-name"
+      - "ok_nabu"
+    restart: unless-stopped
+    depends_on:
+      - microphone
+      - playback
+      - openwakeword
