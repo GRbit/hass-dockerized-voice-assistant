@@ -2,8 +2,7 @@ services:
   homeassistant:
     container_name: homeassistant
     image: "lscr.io/linuxserver/homeassistant:latest"
-    ports:
-      - 8123:8123
+    network_mode: host
     volumes:
       - ${CONTAINERS_CONFIGS}/homeassistant/backup:/backup
       - ${CONTAINERS_CONFIGS}/homeassistant/config:/config
