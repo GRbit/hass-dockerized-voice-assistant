@@ -122,7 +122,7 @@ services:
       - audio
     command:
       - "--device"
-      - "default:CARD=USB"
+      - "${SND_DEVICE}"
       - "--debug"
     restart: unless-stopped
 
@@ -141,7 +141,7 @@ services:
       - audio
     command:
       - "--device"
-      - "default:CARD=USB"
+      - "${MIC_DEVICE}"
       - "--debug"
     restart: unless-stopped
       
