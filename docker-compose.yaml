@@ -49,8 +49,6 @@ services:
       - 127.0.0.1:10300:10300
     volumes:
       - ${CONTAINERS_CONFIGS}/faster-whisper/config:/config
-    security_opt:
-      - seccomp:unconfined
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -58,11 +56,6 @@ services:
       - WHISPER_MODEL=distil-small.en
       - WHISPER_BEAM=1 #optional
       - WHISPER_LANG=en #optional
-    group_add:
-      - video # for gpu decoding support if your server has one
-    devices:
-      - /dev/dri:/dev/dri
-      - /dev/kfd:/dev/kfd
     restart: unless-stopped
 
   piper:
