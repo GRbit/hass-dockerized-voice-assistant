@@ -35,7 +35,6 @@ services:
     volumes:
       - ${CONTAINERS_CONFIGS}/openwakeword:/data
       - ${CONTAINERS_CONFIGS}/openwakeword:/custom
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=Europe/Amsterdam
