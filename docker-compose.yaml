@@ -34,7 +34,7 @@ services:
     image: rhasspy/wyoming-openwakeword
     user: "${PUID}:${PGID}"
     ports:
-      - 10400:10400
+      - 127.0.0.1:10400:10400
     volumes:
       - ${CONTAINERS_CONFIGS}/openwakeword:/data
       - ${CONTAINERS_CONFIGS}/openwakeword:/custom
@@ -49,7 +49,7 @@ services:
     image: lscr.io/linuxserver/faster-whisper:latest
     container_name: faster-whisper
     ports:
-      - 10300:10300
+      - 127.0.0.1:10300:10300
     volumes:
       - ${CONTAINERS_CONFIGS}/faster-whisper/config:/config
     security_opt:
@@ -72,7 +72,7 @@ services:
     image: lscr.io/linuxserver/piper:latest
     container_name: piper
     ports:
-      - 10200:10200
+      - 127.0.0.1:10200:10200
     volumes:
       - ${CONTAINERS_CONFIGS}/piper/config:/config
     environment:
@@ -129,7 +129,7 @@ services:
     environment:
       - TZ=Europe/Amsterdam
     ports:
-      - 10700:10700
+      - 127.0.0.1:10700:10700
     command:
       - "--name"
       - "satellite"
