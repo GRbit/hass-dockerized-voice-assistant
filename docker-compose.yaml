@@ -4,8 +4,6 @@ services:
     image: "lscr.io/linuxserver/homeassistant:latest"
     ports:
       - 8123:8123
-    entrypoint:
-      - "/init"
     volumes:
       - ${CONTAINERS_CONFIGS}/homeassistant/backup:/backup
       - ${CONTAINERS_CONFIGS}/homeassistant/config:/config
@@ -14,17 +12,7 @@ services:
       - TZ=Europe/Amsterdam
       - PGID=${PGID}
       - PUID=${PUID}
-      - PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - PS1=$(whoami)@$(hostname):$(pwd)\\$
-      - HOME=/config
-      - TERM=xterm
-      - S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
-      - S6_VERBOSITY=1
-      - S6_STAGE2_HOOK=/docker-mods
-      - VIRTUAL_ENV=/lsiopy
-      - LSIO_FIRST_PARTY=true
-      - S6_SERVICES_GRACETIME=240000
-    working_dir: "/"
     restart: unless-stopped
 
   mosquitto:
